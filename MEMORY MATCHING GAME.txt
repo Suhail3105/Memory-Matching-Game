@@ -1,0 +1,183 @@
+//write your code here..
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define BOARD_SIZE 2
+#define NUM_PAIRS (BOARD_SIZE * BOARD_SIZE / 2)
+
+typedef struct Node {
+    char data;
+    int revealed;
+    struct Node* next;
+} Node;
+
+typedef struct {
+    Node* head;
+} LinkedList;
+
+Node* createNode(char data);
+void appendNode(LinkedList* list, char data);
+void shuffleBoard(LinkedList* list);
+void printBoard(LinkedList* list);
+void reveal(LinkedList* list, int index);
+int checkMatch(LinkedList* list, int index1, int index2);
+int allRevealed(LinkedList* list);
+
+int main() {
+    srand(time(NULL));
+    LinkedList board = {NULL};
+    char pairs[NUM_PAIRS * 2];
+    char ch = 'A';
+
+    // Initialize pairs
+    for (int i = 0; i < NUM_PAIRS; i++) {
+        pairs[2 * i] = ch;
+        pairs[2 * i + 1] = ch;
+        ch++;
+    }
+
+    // Shuffle pairs array
+    for (int i = 0; i < NUM_PAIRS * 2; i++) {
+        int j = rand() % (NUM_PAIRS * 2);
+        char temp = pairs[i];
+        pairs[i] = pairs[j];
+        pairs[j] = temp;
+    }
+
+    // Fill the linked list with shuffled pairs
+    for (int i = 0; i < NUM_PAIRS * 2; i++) {
+        appendNode(&board, pairs[i]);
+    }
+
+    printBoard(&board);
+
+    int pairsFound = 0;
+    int index1, index2;
+    while (pairsFound < NUM_PAIRS) {
+        do {
+            printf("Enter the index of the first card to reveal (1 to %d): ", BOARD_SIZE * BOARD_SIZE);
+            scanf("%d", &index1);
+            index1--; // Adjust for zero-based indexing
+            if (index1 < 0 || index1 >= BOARD_SIZE * BOARD_SIZE) {
+                printf("Invalid index. Try again.\n");
+            } else {
+                Node* node = board.head;
+                for (int i = 0; i < index1; i++) {
+                    node = node->next;
+                }
+                if (node->revealed) {
+                    printf("Card already revealed. Try again.\n");
+                } else {
+                    break;
+                }
+            }
+        } while (1);
+
+        reveal(&board, index1);
+        printBoard(&board);
+
+        do {
+            printf("Enter the index of the second card to reveal (1 to %d): ", BOARD_SIZE * BOARD_SIZE);
+            scanf("%d", &index2);
+            index2--; // Adjust for zero-based indexing
+            if (index2 < 0 || index2 >= BOARD_SIZE * BOARD_SIZE) {
+                printf("Invalid index. Try again.\n");
+            } else {
+                Node* node = board.head;
+                for (int i = 0; i < index2; i++) {
+                    node = node->next;
+                }
+                if (node->revealed) {
+                    printf("Card already revealed. Try again.\n");
+                } else {
+                    break;
+                }
+            }
+        } while (1);
+
+        reveal(&board, index2);
+        printBoard(&board);
+
+        if (checkMatch(&board, index1, index2)) {
+            printf("Congratulations! You found a pair!\n");
+            pairsFound++;
+        } else {
+            printf("Sorry, try again!\n");
+            reveal(&board, index1);
+            reveal(&board, index2);
+        }
+    }
+
+    printf("All pairs found! Game over.\n");
+
+    return 0;
+}
+
+Node* createNode(char data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->revealed = 0; // Initially hidden
+    newNode->next = NULL;
+    return newNode;
+}
+
+void appendNode(LinkedList* list, char data) {
+    Node* newNode = createNode(data);
+    if (list->head == NULL) {
+        list->head = newNode;
+    } else {
+        Node* current = list->head;
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = newNode;
+    }
+}
+
+void printBoard(LinkedList* list) {
+    Node* current = list->head;
+    int index = 1;
+    while (current != NULL) {
+        if (current->revealed) {
+            printf("[%c] ", current->data);
+        } else {
+            printf("[ ] ");
+        }
+        if (index % BOARD_SIZE == 0) {
+            printf("\n");
+        }
+        current = current->next;
+        index++;
+    }
+    printf("\n");
+}
+
+void reveal(LinkedList* list, int index) {
+    Node* current = list->head;
+    for (int i = 0; i < index; i++) {
+        current = current->next;
+    }
+}
+int checkMatch(LinkedList* list, int index1, int index2) {
+    Node* node1 = list->head;
+    for (int i = 0; i < index1; i++) {
+        node1 = node1->next;
+    }
+    Node* node2 = list->head;
+    for (int i = 0; i < index2; i++) {
+        node2 = node2->next;
+    }
+    return node1->data == node2->data;
+}
+
+int allRevealed(LinkedList* list) {
+    Node* current = list->head;
+    while (current != NULL) {
+        if (!current->revealed) {
+            return 0;
+        }
+        current = current->next;
+    }
+    return 1;
+}
